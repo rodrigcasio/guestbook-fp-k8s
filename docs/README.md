@@ -1,45 +1,80 @@
-Local Lab Execution Guide: Guestbook-py (Go Version)
+Local Kubernetes Lab: Guestbook-Go
 
-Guide for the Guestbook Final Project locally on Arch Linux using Minikube and Docker Hub.
+This guide documents the deployment and management of the Guestbook-Go application. The laboratory exercises were performed on Arch Linux using Minikube as the local cluster provider and the kubectl CLI for resource orchestration. The setup emphasizes the use of Kubernetes Namespaces for resource isolation and Horizontal Pod Autoscaling (HPA) for performance management.
 
-1. Environment Setup
+1. Environment Initialization
 
-OS: Arch Linux
+Prepare the local cluster and the metrics server for monitoring and scaling capabilities.
 
-Container Runtime: Docker (sudo systemctl start docker)
+Start Docker Engine:
+(sudo systemctl start docker)
 
-Local Cluster: Minikube (minikube start --driver=docker)
+Start Minikube:
+(minikube start --driver=docker)
 
-Add-ons: minikube addons enable metrics-server (Required for HPA)
+Enable Metrics Server for HPA support:
+(minikube addons enable metrics-server)
 
-2. Image Management (Docker Hub)
+2. Cluster Configuration and Deployment
 
-Instead of using IBM Cloud Container Registry, images were pushed to a personal Docker Hub account.
+Set up the isolated namespace and deploy the application resources.
 
-V1 Build: docker build -t rodrigocasio/guestbook-py:v1 .
+Create the project namespace:
+(kubectl create namespace guestbook-go-project)
 
-V2 Build: docker build -t rodrigocasio/guestbook-py:v2 . (After modifying public/index.html)
+Apply the Deployment manifest:
+(kubectl apply -f deployment-v2.yml)
 
-3. Declarative Deployment Configuration
+Apply the Service manifest:
+(kubectl apply -f service.yml)
 
-Two manifest files were created to maintain state:
+Set up the Horizontal Pod Autoscaler:
+(kubectl autoscale deployment guestbook --cpu-percent=50 --min=1 --max=10 -n guestbook-go-project)
 
-deployment-v1.yml: Configured with image: v1 and initial resource requests.
+3. Verification and Access
 
-deployment-v2.yml: Updated with image: v2 and optimized resource limits (5m CPU) for local HPA testing.
+Monitor the resources and launch the application.
 
-4. Kubernetes Operations
+Check Pod status:
+(kubectl get pods -n guestbook-go-project)
 
-Deployment: kubectl apply -f deployment-v2.yml
+Check HPA metrics:
+(kubectl get hpa -n guestbook-go-project)
 
-Autoscaling: kubectl autoscale deployment guestbook --cpu-percent=50 --min=1 --max=10
+Access the application UI:
+(minikube service guestbook -n guestbook-go-project)
 
-Verification: kubectl get hpa (Verified TARGETS reached 0%/50% or higher).
+4. Updates and Rollbacks
 
-Rolling Update: kubectl set image deployment/guestbook guestbook=rodrigocasio/guestbook-py:v2
+Manage deployment versions and history using imperative commands.
 
-Rollback: kubectl rollout undo deployment/guestbook
+Trigger a Rolling Update:
+(kubectl set image deployment/guestbook guestbook=rodrigocasio/guestbook-go:v2 -n guestbook-go-project)
 
-5. Accessing the App
+Check deployment status:
+(kubectl rollout status deployment/guestbook -n guestbook-go-project)
 
-Command: minikube service guestbook or kubectl port-forward deployment/guestbook 3000:3000
+Perform a Rollback:
+(kubectl rollout undo deployment/guestbook -n guestbook-go-project)
+
+View deployment history:
+(kubectl rollout history deployment/guestbook -n guestbook-go-project)
+
+5. Cleanup and Shutdown
+
+Commands to clear the environment and stop local services to free system resources.
+
+Delete the project namespace:
+(kubectl delete namespace guestbook-go-project)
+
+Stop the Minikube cluster:
+(minikube stop)
+
+Stop the Docker service:
+(sudo systemctl stop docker)
+
+Remove local Docker images:
+(docker rmi rodrigocasio/guestbook-go:v1 rodrigocasio/guestbook-go:v2)
+
+Prune unused Docker data:
+(docker system prune -f)
