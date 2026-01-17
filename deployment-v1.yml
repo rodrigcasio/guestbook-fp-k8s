@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: guestbook
+  namespace: guestbook-go-project
 spec:
   replicas: 1
   selector:
@@ -14,11 +15,11 @@ spec:
     spec:
       containers:
       - name: guestbook
-        image: rodrigocasio/guestbook-py:v1
+        image: rodrigocasio/guestbook-go:v1 
         resources:
           requests:
-            cpu: 20m
+            cpu: "20m"
           limits:
-            cpu: 50m
+            cpu: "50m"
         ports:
         - containerPort: 3000
