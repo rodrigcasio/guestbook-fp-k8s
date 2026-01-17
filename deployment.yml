@@ -20,7 +20,7 @@ spec:
         app: guestbook
     spec:
       containers:
-      - image: rodrigocasio/guestbook-py:v1
+      - image: rodrigocasio/guestbook-py:v2
         imagePullPolicy: Always
         name: guestbook
         ports:
